@@ -5,4 +5,6 @@
     <string name="click_here_to_transfer_amount">Click here to Transfer amount</string>
     <string name="name">name</string>
     <string name="balance">Balance</string>
+    <string name="users">USERS</string>
+    <string name="description">Credit manager having 10 users and allows users to do transactions among them</string>
 </resources>

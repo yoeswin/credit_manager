@@ -17,7 +17,7 @@ import android.widget.ListView;
 
 public class MainActivity extends AppCompatActivity {
     SQLiteDatabase db;
-    String[] name, email, balance, tts;
+    String[] name, email, balance, transactionString;
     ListView ls;
 
     @Override
@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
                 name[i] = result.getString(1);
                 email[i] = result.getString(0);
                 balance[i] = String.valueOf(result.getInt(2));
-//                Toast.makeText(this,String.valueOf(result.getInt(2)),Toast.LENGTH_SHORT).show();
                 i++;
             }
             result.close();
@@ -51,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         ls = findViewById(R.id.listview);
         db = openOrCreateDatabase("Student", Context.MODE_PRIVATE, null);
         db.execSQL("CREATE TABLE IF NOT EXISTS account(Email TEXT PRIMARY KEY , name TEXT , balance int);");
-        db.execSQL("CREATE TABLE IF NOT EXISTS tt(detail VARCHAR);");
+        db.execSQL("CREATE TABLE IF NOT EXISTS tt(sender VARCHAR ,receiver VARCHAR,amount VARCHAR);");
 
         ls.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -104,17 +103,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (db.isOpen()) {
             Cursor result = db.rawQuery("SELECT * FROM tt", null);
-            tts = new String[result.getCount()];
+            transactionString = new String[result.getCount()];
             int x = 0;
             while (result.moveToNext()) {
-                tts[x] = "\n"+result.getString(0)+"\n";
-//                Toast.makeText(this,String.valueOf(result.getInt(2)),Toast.LENGTH_SHORT).show();
+                transactionString[x] = "\nTransferred "+result.getString(2)+" credits from "+result.getString(0)+" to "+result.getString(1)+"\n";
                 x++;
             }
             result.close();
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, tts);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, transactionString);
         lv.setAdapter(adapter);
         alertDialog.show();
 

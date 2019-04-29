@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,6 +29,7 @@ public class Transaction extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction);
+        setTitle("Transaction");
 
         Intent i = getIntent();
         uid = i.getStringExtra("id");
@@ -43,9 +45,9 @@ public class Transaction extends AppCompatActivity {
         TextView Uemail = findViewById(R.id.sEmail);
         TextView bal = findViewById(R.id.balance);
 
-        Uname.setText("Name  ::" + uname);
-        Uemail.setText("E-mail ::" + uid);
-        bal.setText("Bal   ::" + ubalance);
+        Uname.setText("Name   ::  " + uname);
+        Uemail.setText("E-mail ::  " + uid);
+        bal.setText("Bal    ::  " + ubalance);
 
 
         lsq.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -59,7 +61,9 @@ public class Transaction extends AppCompatActivity {
                     LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.MATCH_PARENT);
+                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
                     input.setLayoutParams(lp);
+
                     alertDialog.setView(input);
                     alertDialog.setIcon(R.drawable.ic_launcher_foreground);
 
@@ -94,23 +98,31 @@ public class Transaction extends AppCompatActivity {
     }
 
     public void transfer(String sid, double amount) {
-        if (amount < Double.valueOf(ubalance)) {
+        if (amount <= Double.valueOf(ubalance)) {
             db = openOrCreateDatabase("Student", Context.MODE_PRIVATE, null);
-            if (db.isOpen()) {
-                Cursor result = db.rawQuery("SELECT balance FROM account where Email='" + sid + "'", null);
-                result.moveToFirst();
-                double sbalance = Double.valueOf(result.getString(0)) + amount;
-                result.close();
 
-                db.execSQL("UPDATE account SET balance = '" + sbalance + "' WHERE email = '" + sid + "'");
-                double uubalance = Double.valueOf(ubalance) - amount;
-                db.execSQL("UPDATE account SET balance = '" + uubalance + "' WHERE email = '" + uid + "'");
-                String transaction_data = "Transferred " + amount + " from " + uid + " to " + sid;
-                db.execSQL("insert into tt values('" + transaction_data + "')");
+            db.beginTransaction();
+            try {
+                if (db.isOpen()) {
+                    Cursor result = db.rawQuery("SELECT balance FROM account where Email='" + sid + "'", null);
+                    result.moveToFirst();
+                    double sbalance = Double.valueOf(result.getString(0)) + amount;
+                    result.close();
 
-//                startActivity(new Intent(Transaction.this, MainActivity.class));
-                finish();
+                    db.execSQL("UPDATE account SET balance = '" + sbalance + "' WHERE email = '" + sid + "'");
+                    double uubalance = Double.valueOf(ubalance) - amount;
+                    db.execSQL("UPDATE account SET balance = '" + uubalance + "' WHERE email = '" + uid + "'");
+                    db.execSQL("insert into tt values('" + uid + "','" + sid + "','" + amount + "')");
+
+                    db.setTransactionSuccessful();
+                    finish();
+                }
+            } catch (Exception e) {
+                Toast.makeText(Transaction.this, "Transaction not complete", Toast.LENGTH_SHORT).show();
+            } finally {
+                db.endTransaction();
             }
+
         } else Toast.makeText(Transaction.this, "Insufficient balance", Toast.LENGTH_SHORT).show();
     }
 }
